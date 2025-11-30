@@ -17,8 +17,11 @@ def main():
 def game(background, display_surface, clock):
     # Declare variables
     position = 100         # starting point
-    velocity = 2           # constant open-loop speed
+    velocity = 0
     target = 600           # for drawing only
+    Kp = 0.02              # porpotional gain factor
+    Ki = 0.0002            # integral gain factor
+    integral_error = 0
 
 
     running = True
@@ -29,33 +32,39 @@ def game(background, display_surface, clock):
                 running = False
                 pg.quit()
                 sys.exit()
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_RIGHT:
-                    velocity += 0.5
-                if event.key == pg.K_LEFT:
-                    velocity -= 0.5
 
-        # Clamp velocity
-        if velocity > 10:
-            velocity = 10
-        if velocity < -10:
-            velocity = -10
+        # --- Control System ---
+        error = target - position       # 1) compute error
+        integral_error += error
+       
+        # Anti-windup clamp
+        if integral_error > 2000:
+            integral_error = 2000
+        if integral_error < -2000:
+            integral_error = -2000
+       
+        velocity = (Kp * error) + (Ki * integral_error)           # 2) proportional control
+        position += velocity            # 3) update plant
+  
 
-        
-        position += velocity
 
-        # Draw
+        # --- Drawing ---
         display_surface.blit(background, (0, 0))
-        pg.draw.line(display_surface, "black", (50,100), (750,100),3)
-        pg.draw.line(display_surface, "green",
-             (target, 75), (target, 125), 4)
-        pg.draw.circle(display_surface, "red",
-               (int(position), 100), 10)
-        print("pos:", position, " vel:", velocity)
+        pg.draw.line(display_surface, "black", (50, 100), (750, 100), 3)
+        pg.draw.line(display_surface, "green", (target, 75), (target, 125), 4)
+        pg.draw.circle(display_surface, "red", (int(position), 100), 10)
 
-        # Update
+        # --- Update display ---
+        print(
+    "pos:", round(position,1),
+    " err:", round(error,1),
+    " I:", round(integral_error,1),
+    " vel:", round(velocity,3)
+)
+
         pg.display.update()
         clock.tick(60)
+
 
         
 
