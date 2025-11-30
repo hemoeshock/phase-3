@@ -21,7 +21,9 @@ def game(background, display_surface, clock):
     target = 600           # for drawing only
     Kp = 0.02              # porpotional gain factor
     Ki = 0.0002            # integral gain factor
+    Kd = 0.05
     integral_error = 0
+    previous_error = 0
 
 
     running = True
@@ -35,6 +37,7 @@ def game(background, display_surface, clock):
 
         # --- Control System ---
         error = target - position       # 1) compute error
+        derivative_error = error - previous_error
         integral_error += error
        
         # Anti-windup clamp
@@ -42,8 +45,15 @@ def game(background, display_surface, clock):
             integral_error = 2000
         if integral_error < -2000:
             integral_error = -2000
+
+        if derivative_error > 100:
+            derivative_error = 100
+        if derivative_error < -100:
+            derivative_error = -100
+
        
-        velocity = (Kp * error) + (Ki * integral_error)           # 2) proportional control
+        velocity = (Kp * error) + (Ki * integral_error) + (Kd * derivative_error)            # 2) proportional control
+        previous_error = error
         position += velocity            # 3) update plant
   
 
@@ -59,6 +69,7 @@ def game(background, display_surface, clock):
     "pos:", round(position,1),
     " err:", round(error,1),
     " I:", round(integral_error,1),
+    " D:", round(derivative_error,1),
     " vel:", round(velocity,3)
 )
 
