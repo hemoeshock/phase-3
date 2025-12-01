@@ -18,12 +18,18 @@ def game(background, display_surface, clock):
     # Declare variables
     position = 100         # starting point
     velocity = 0
+    u = 0
     target = 600           # for drawing only
-    Kp = 0.02              # porpotional gain factor
+    Kp = 0.05              # porpotional gain factor
     Ki = 0.0002            # integral gain factor
     Kd = 0.05
     integral_error = 0
     previous_error = 0
+    tau = 2.0          # ثابت الزمن للنظام (كلما كبر صار أبطأ)
+    plant_gain = 3.0    # كسب النظام K
+    dt = 1 / 60.0   # الزمن لكل فريم (بما إننا نعمل tick(60))
+
+
 
 
     running = True
@@ -52,9 +58,12 @@ def game(background, display_surface, clock):
             derivative_error = -100
 
        
-        velocity = (Kp * error) + (Ki * integral_error) + (Kd * derivative_error)            # 2) proportional control
+        u = (Kp * error) + (Ki * integral_error) + (Kd * derivative_error)            # 2) proportional control
         previous_error = error
-        position += velocity            # 3) update plant
+        # نموذج موتور من الدرجة الأولى على السرعة:
+        velocity += (-velocity / tau + plant_gain * u / tau) * dt
+        position += velocity * dt   # 3) update plant
+          
   
 
 
